@@ -1,0 +1,32 @@
+# Death Improvements Plus (Paper)
+
+# Items and experience dropped on death land in one spot instead of scattering.
+no-item-splatter-on-death: true
+no-xp-splatter-on-death: true
+
+# Items dropped on death never despawn. When false, they despawn after item-despawn-timer seconds instead.
+no-death-item-despawn: true
+item-despawn-timer: 300
+
+# If a player dies in/above lava or in/above the Void, their items drop at the last safe spot they stood on.
+try-item-lava-save-on-death: true
+try-item-void-save-on-death: true
+
+# Explosions no longer destroy dropped items.
+explosion-resistant-items: true
+
+# Players drop a percentage of their total experience on death instead of the vanilla amount.
+player-drop-more-xp-on-death: true
+dropped-experience-percent: 80
+
+# Keep items on death. Ignored when keepInventory is on.
+# Each *-drop-list holds item ids (e.g. minecraft:diamond_chestplate) that are dropped anyway.
+keep-armor-on-death: false
+armor-drop-list: []
+keep-hotbar-on-death: false
+hotbar-drop-list: []
+keep-offhand-on-death: false
+offhand-drop-list: []
+
+# Log what the plugin does on each death.
+debug: false

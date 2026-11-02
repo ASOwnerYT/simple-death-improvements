@@ -13,7 +13,6 @@ pluginManagement {
         kotlin("jvm") version "2.3.21"
         id("com.google.devtools.ksp") version "2.3.10"
         id("dev.kikugie.fletching-table.fabric") version "0.1.0-alpha.22"
-        id("me.modmuss50.mod-publish-plugin") version "2.1.1"
     }
 }
 
@@ -36,4 +35,4 @@ stonecutter {
     }
 }
 
-rootProject.name = "Simple Death Improvements"
+rootProject.name = "Death Improvements Plus"

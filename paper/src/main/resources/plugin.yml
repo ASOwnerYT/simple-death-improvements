@@ -1,0 +1,16 @@
+name: DeathImprovementsPlus
+version: '${version}'
+main: me.asowneryt.death_improvements_plus.paper.DIPPlugin
+api-version: '1.21'
+description: '${description}'
+authors: [ASOwnerYT, pajic]
+website: https://github.com/ASOwnerYT/simple-death-improvements
+commands:
+  dip:
+    description: Death Improvements Plus admin command
+    usage: /dip reload
+    permission: deathimprovementsplus.reload
+permissions:
+  deathimprovementsplus.reload:
+    description: Allows reloading the config
+    default: op

@@ -5,7 +5,6 @@ plugins {
     kotlin("jvm") apply false
     id("com.google.devtools.ksp") apply false
     id("dev.kikugie.fletching-table.fabric") apply false
-    id("me.modmuss50.mod-publish-plugin") apply false
 }
 
 stonecutter active "26.3-fabric"

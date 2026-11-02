@@ -1,11 +1,9 @@
 @file:Suppress("AvoidDuplicateDependencies")
-import me.modmuss50.mpp.platforms.modrinth.ModrinthEnvironment
 
 plugins {
     kotlin("jvm")
     id("com.google.devtools.ksp")
     id("dev.kikugie.fletching-table.fabric")
-    id("me.modmuss50.mod-publish-plugin")
     id("dev.kikugie.loom-back-compat")
 }
 
@@ -41,8 +39,6 @@ val requiredJava: JavaVersion = when {
     else -> JavaVersion.VERSION_21
 }
 
-val compatibleVersions: List<String> = sc.properties.rawOrNull("mod", "mc_releases")
-    ?.asList().orEmpty().map { it.toString() }
 val runtimeOptionals: List<String> = sc.properties.rawOrNull("dev", "runtime_optionals")
     ?.asList().orEmpty().map { it.toString() }
 
@@ -172,7 +168,6 @@ tasks {
             register("sources_url", "mod.sources_url")
             register("homepage_url", "mod.homepage_url")
             register("issues_url", "mod.issues_url")
-            register("discord_url", "mod.discord_url")
             register("authors", "mod.authors")
             register("contributors", "mod.contributors")
             inputs.property("ct", ct)
@@ -195,6 +190,11 @@ tasks {
         exclude { it.path.startsWith("aw/") && it.path != ct }
     }
 
+    val licenseName = "LICENSE_${project.property("mod.id")}"
+    withType<Jar>().configureEach {
+        from(rootProject.file("LICENSE")) { rename { licenseName } }
+    }
+
     register<Copy>("buildAndCollect") {
         group = "build"
         description = "Builds mod jars and copies results to `build/libs/{mod version}/`"
@@ -202,35 +202,5 @@ tasks {
         inputs.property("version", project.property("mod.version"))
         from(loomx.modJar.flatMap { it.archiveFile }, loomx.modSourcesJar.flatMap { it.archiveFile })
         into(rootProject.layout.buildDirectory.file("libs/${project.property("mod.version")}"))
-    }
-}
-
-publishMods {
-    file.set(loomx.modJar.get().archiveFile)
-    additionalFiles.from(loomx.modSourcesJar.get().archiveFile)
-    changelog.set(rootProject.file("CHANGELOG.md").readText())
-    type.set(STABLE)
-    modLoaders.add("fabric")
-    displayName = "${property("mod.version")} for Fabric ${sc.current.version}"
-    dryRun = (property("publish.dry_run") as String).toBooleanStrict()
-
-    val mrRequired = requiredDeps.map { it.slug("modrinth") }
-    val cfRequired = requiredDeps.map { it.slug("curseforge") }
-
-    modrinth {
-        projectId.set("${property("publish.modrinth")}")
-        accessToken.set(providers.environmentVariable("MR_KEY"))
-        minecraftVersions.addAll(compatibleVersions)
-        environment.set(ModrinthEnvironment.valueOf(property("publish.env.mr") as String))
-        requires(*mrRequired.toTypedArray())
-    }
-
-    curseforge {
-        projectId.set("${property("publish.curseforge")}")
-        accessToken.set(providers.environmentVariable("CF_KEY"))
-        minecraftVersions.addAll(compatibleVersions)
-        client = (property("publish.env.cf.client") as String).toBooleanStrict()
-        server = (property("publish.env.cf.server") as String).toBooleanStrict()
-        requires(*cfRequired.toTypedArray())
     }
 }

@@ -1,26 +1,17 @@
 # general
-mod.id = "simple_death_improvements"
-mod.name = "Simple Death Improvements"
-mod.group = "me.pajic"
-mod.version = "1.6.1"
-mod.description = "Less frustrating deaths - no item despawn, no item splatter, item safeguards and more"
-mod.authors = "pajic"
-mod.contributors = ""
+mod.id = "death_improvements_plus"
+mod.name = "Death Improvements Plus"
+mod.group = "me.asowneryt"
+mod.version = "1.0.0"
+mod.description = "Less frustrating deaths - no item despawn, no item splatter, item safeguards and more. A fork of Simple Death Improvements by pajic."
+mod.authors = "ASOwnerYT"
+mod.contributors = "pajic (original Simple Death Improvements)"
 mod.license = "MIT"
 
 # links
-mod.sources_url = "https://github.com/pajicadvance/simple-death-improvements"
-mod.homepage_url = "https://modrinth.com/mod/simple-death-improvements"
-mod.issues_url = "https://github.com/pajicadvance/simple-death-improvements/issues"
-mod.discord_url = "https://discord.gg/5RkzS66zWb"
-
-# publishing
-publish.modrinth = "2JFsuD70"
-publish.curseforge = "1163907"
-publish.env.mr = "SERVER_ONLY" #https://modmuss50.github.io/mod-publish-plugin/platforms/modrinth/#all-options
-publish.env.cf.client = false
-publish.env.cf.server = true
-publish.dry_run = false
+mod.sources_url = "https://github.com/ASOwnerYT/simple-death-improvements"
+mod.homepage_url = "https://github.com/ASOwnerYT/simple-death-improvements"
+mod.issues_url = "https://github.com/ASOwnerYT/simple-death-improvements/issues"
 
 # loom
 loomx.loom_version = "1.17-SNAPSHOT"
