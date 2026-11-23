@@ -23,6 +23,9 @@ public record SDIConfig(
         Set<NamespacedKey> hotbarDropList,
         boolean keepOffhandOnDeath,
         Set<NamespacedKey> offhandDropList,
+        boolean keepDamageableItemsOnDeath,
+        int keptItemDurabilityLossPercent,
+        Set<NamespacedKey> damageableItemDropList,
         boolean debug
 ) {
 
@@ -30,7 +33,7 @@ public record SDIConfig(
         return new SDIConfig(
                 config.getBoolean("no-item-splatter-on-death", true),
                 config.getBoolean("no-death-item-despawn", true),
-                Math.max(1, config.getInt("item-despawn-timer", 300)),
+                Math.clamp(config.getInt("item-despawn-timer", 300), 1, Integer.MAX_VALUE / 20),
                 config.getBoolean("try-item-lava-save-on-death", true),
                 config.getBoolean("try-item-void-save-on-death", true),
                 config.getBoolean("explosion-resistant-items", true),
@@ -43,6 +46,9 @@ public record SDIConfig(
                 keys(config, "hotbar-drop-list"),
                 config.getBoolean("keep-offhand-on-death", false),
                 keys(config, "offhand-drop-list"),
+                config.getBoolean("keep-damageable-items-on-death", false),
+                Math.clamp(config.getInt("kept-item-durability-loss-percent", 20), 0, 100),
+                keys(config, "damageable-item-drop-list"),
                 config.getBoolean("debug", false)
         );
     }

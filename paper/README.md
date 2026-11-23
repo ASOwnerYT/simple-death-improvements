@@ -22,12 +22,9 @@ The jar ends up in `paper/build/libs/`. Its version comes from `mod.version` in 
 
 ## Differences from the Fabric/NeoForge mod
 
-- **No accessory support.** Trinkets, Curios and Ohmega are mods, so `keep-accessories-on-death` does not exist.
+- **No accessory support.** Trinkets, Curios and Ohmega are mods, so `keep-accessories-on-death` does not exist and `keep-damageable-items-on-death` only covers the player inventory.
 - **Explosions** no longer damage dropped items, but can still push them around.
-- **Safe spots are per world.** If a player dies in a different world than their last safe spot (e.g. right after going through a portal), items drop where they died.
 - **Safe spots** must not have lava or fire in the block above, so teleporting straight into lava can't record the floor under it.
-- **Airborne deaths** scan downward only until the first solid block, so lava hidden under a floor no longer counts as "above lava".
-- **Experience** drops at the death location if no safe spot has been recorded yet, instead of at 0, 0, 0.
 - **Drop timer** (`no-death-item-despawn: false`) counts in 1-second steps.
 
 The plugin handles player drops at `HIGHEST` priority, after most other plugins. Grave or soulbound plugins that change the drop list at a lower priority still work.

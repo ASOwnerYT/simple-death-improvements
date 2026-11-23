@@ -1,6 +1,7 @@
 package me.pajic.simple_death_improvements.paper;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -25,13 +26,10 @@ import java.util.UUID;
  */
 public class SafeSpotTracker implements Listener {
 
-    private static final int DELAY_BEFORE_TRACKING = 100;
-
     private final SDIPlugin plugin;
     private final NamespacedKey worldKey;
     private final NamespacedKey posKey;
     private final Map<UUID, Location> lastSafePos = new HashMap<>();
-    private final Map<UUID, Integer> delayBeforeTracking = new HashMap<>();
 
     public SafeSpotTracker(SDIPlugin plugin) {
         this.plugin = plugin;
@@ -70,15 +68,13 @@ public class SafeSpotTracker implements Listener {
         return pos != null && player.getWorld().equals(pos.getWorld()) ? pos.clone() : null;
     }
 
+    // isOnGround is client-reported, the same flag the mod's onGround() check uses
+    @SuppressWarnings("deprecation")
     private void tick() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.isDead()) continue;
+            // Not recorded in spectator mode or midair, like the mod
+            if (player.isDead() || !player.isOnGround() || player.getGameMode() == GameMode.SPECTATOR) continue;
             UUID uuid = player.getUniqueId();
-            int delay = delayBeforeTracking.getOrDefault(uuid, 0);
-            if (delay > 0) {
-                delayBeforeTracking.put(uuid, delay - 1);
-                continue;
-            }
             Block block = blockOn(player);
             // Also check where items would land: isInLava() can lag a tick behind teleports into lava
             if (player.isInLava() || !canStandOn(block) || isDangerous(block.getRelative(BlockFace.UP))) continue;
@@ -94,7 +90,6 @@ public class SafeSpotTracker implements Listener {
 
     private void load(Player player) {
         UUID uuid = player.getUniqueId();
-        delayBeforeTracking.put(uuid, DELAY_BEFORE_TRACKING);
         PersistentDataContainer pdc = player.getPersistentDataContainer();
         String worldId = pdc.get(worldKey, PersistentDataType.STRING);
         int[] pos = pdc.get(posKey, PersistentDataType.INTEGER_ARRAY);
@@ -117,8 +112,6 @@ public class SafeSpotTracker implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        UUID uuid = event.getPlayer().getUniqueId();
-        lastSafePos.remove(uuid);
-        delayBeforeTracking.remove(uuid);
+        lastSafePos.remove(event.getPlayer().getUniqueId());
     }
 }

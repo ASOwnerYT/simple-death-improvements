@@ -4,7 +4,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.GameMode;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,10 +15,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -47,48 +51,91 @@ public class DeathListener implements Listener {
 
         if (!event.getKeepInventory()) keepItems(event, config);
 
-        if (config.playerDropMoreXpOnDeath() && !event.getKeepLevel()) {
+        if (config.playerDropMoreXpOnDeath() && player.getGameMode() != GameMode.SPECTATOR && !event.getKeepLevel()) {
             event.setDroppedExp(totalExperience(player) * config.droppedExperiencePercent() / 100);
         }
 
+        // Items and experience are moved to the last safe spot together, only when the death spot isn't safe
         Location safePos = plugin.safeSpotTracker().getLastSafePos(player);
-        dropItems(event, config, safePos);
-        dropExperience(event, config, safePos);
+        Location savePos = safePos != null ? findItemSavePos(player, config, safePos) : null;
+        if (savePos != null) savePos.add(0.5, 1, 0.5);
+        dropItems(event, config, savePos);
+        dropExperience(event, config, savePos);
     }
 
     private void keepItems(PlayerDeathEvent event, SDIConfig config) {
         PlayerInventory inventory = event.getEntity().getInventory();
-        if (config.keepHotbarOnDeath()) keepSlots(event, inventory, HOTBAR_SLOTS, config.hotbarDropList());
-        if (config.keepArmorOnDeath()) keepSlots(event, inventory, ARMOR_SLOTS, config.armorDropList());
-        if (config.keepOffhandOnDeath()) keepSlots(event, inventory, OFFHAND_SLOTS, config.offhandDropList());
+        Set<Integer> keptSlots = new HashSet<>();
+        if (config.keepHotbarOnDeath()) keepSlots(event, inventory, HOTBAR_SLOTS, config.hotbarDropList(), keptSlots);
+        if (config.keepArmorOnDeath()) keepSlots(event, inventory, ARMOR_SLOTS, config.armorDropList(), keptSlots);
+        if (config.keepOffhandOnDeath()) keepSlots(event, inventory, OFFHAND_SLOTS, config.offhandDropList(), keptSlots);
+        // Runs last, so items kept by the options above don't lose durability
+        if (config.keepDamageableItemsOnDeath()) keepDamageableItems(event, inventory, config, keptSlots);
     }
 
-    private void keepSlots(PlayerDeathEvent event, PlayerInventory inventory, int[] slots, Set<NamespacedKey> dropList) {
+    private void keepSlots(PlayerDeathEvent event, PlayerInventory inventory, int[] slots, Set<NamespacedKey> dropList, Set<Integer> keptSlots) {
         for (int slot : slots) {
             ItemStack stack = inventory.getItem(slot);
             if (stack == null || stack.getType().isAir() || dropList.contains(stack.getType().getKey())) continue;
-            // Only keep what is actually being dropped, so items removed by curses or other plugins stay removed
-            for (Iterator<ItemStack> it = event.getDrops().iterator(); it.hasNext(); ) {
-                ItemStack drop = it.next();
-                if (stack.equals(drop)) {
-                    it.remove();
-                    event.getItemsToKeep().add(drop);
-                    break;
-                }
-            }
+            ItemStack drop = takeDrop(event, stack);
+            if (drop == null) continue;
+            event.getItemsToKeep().add(drop);
+            keptSlots.add(slot);
         }
     }
 
-    private void dropItems(PlayerDeathEvent event, SDIConfig config, @Nullable Location safePos) {
+    /**
+     * Keeps every item with durability that is still being dropped, minus a percentage of its total durability.
+     * The item is never broken by this, it keeps at least 1 durability.
+     */
+    private void keepDamageableItems(PlayerDeathEvent event, PlayerInventory inventory, SDIConfig config, Set<Integer> keptSlots) {
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            if (keptSlots.contains(slot)) continue;
+            ItemStack stack = inventory.getItem(slot);
+            if (stack == null || stack.getType().isAir() || config.damageableItemDropList().contains(stack.getType().getKey())) continue;
+            if (stack.containsEnchantment(Enchantment.VANISHING_CURSE)) continue;
+            if (!(stack.getItemMeta() instanceof Damageable meta) || meta.isUnbreakable()) continue;
+            int maxDamage = meta.hasMaxDamage() ? meta.getMaxDamage() : stack.getType().getMaxDurability();
+            if (maxDamage <= 0) continue;
+            ItemStack drop = takeDrop(event, stack);
+            if (drop == null) continue;
+
+            int durabilityLoss = (int) Math.ceil(maxDamage * config.keptItemDurabilityLossPercent() / 100.0);
+            meta.setDamage(Math.min(meta.getDamage() + durabilityLoss, maxDamage - 1));
+            ItemStack kept = drop.clone();
+            kept.setItemMeta(meta);
+            // Paper matches kept items to their slots by equality, so the slot has to hold the damaged copy too
+            inventory.setItem(slot, kept);
+            event.getItemsToKeep().add(kept.clone());
+            keptSlots.add(slot);
+            plugin.debugLog("Kept %s in slot %d for player %s with %d durability lost", stack.getType().getKey(), slot, event.getEntity().getName(), durabilityLoss);
+        }
+    }
+
+    /**
+     * Removes the drop matching the given inventory item from the drop list.
+     * Only what is actually being dropped can be kept, so items removed by curses or other plugins stay removed.
+     *
+     * @return the removed drop, or null if the item isn't being dropped
+     */
+    private static @Nullable ItemStack takeDrop(PlayerDeathEvent event, ItemStack stack) {
+        for (Iterator<ItemStack> it = event.getDrops().iterator(); it.hasNext(); ) {
+            ItemStack drop = it.next();
+            if (stack.equals(drop)) {
+                it.remove();
+                return drop;
+            }
+        }
+        return null;
+    }
+
+    private void dropItems(PlayerDeathEvent event, SDIConfig config, @Nullable Location savePos) {
         if (event.getDrops().isEmpty()) return;
         Player player = event.getEntity();
         List<ItemStack> drops = new ArrayList<>(event.getDrops());
         event.getDrops().clear();
 
-        Location savePos = safePos != null ? findItemSavePos(player, config, safePos) : null;
-        Location dropPos = savePos != null
-                ? savePos.add(0.5, 1, 0.5)
-                : player.getLocation().add(0, player.getEyeHeight() - 0.3, 0);
+        Location dropPos = savePos != null ? savePos : player.getLocation().add(0, player.getEyeHeight() - 0.3, 0);
 
         for (ItemStack stack : drops) {
             if (stack == null || stack.getType().isAir()) continue;
@@ -119,7 +166,7 @@ public class DeathListener implements Listener {
         if (on.getType().isAir()) {
             plugin.debugLog("Player %s died while airborne", player.getName());
             boolean isSafeBelow = false;
-            for (int y = on.getY() - 1; y > world.getMinHeight(); y--) {
+            for (int y = on.getY() - 1; y >= world.getMinHeight(); y--) {
                 Block block = world.getBlockAt(on.getX(), y, on.getZ());
                 if (config.tryItemLavaSaveOnDeath() && block.getType() == Material.LAVA && !player.isInLava()) {
                     plugin.debugLog("Block below player at %d %d %d is lava", block.getX(), block.getY(), block.getZ());
@@ -147,18 +194,18 @@ public class DeathListener implements Listener {
 
     private Location logSave(Player player, Location safePos, ItemSaveReason reason) {
         plugin.debugLog(
-                "Dropped items for player %s at %d %d %d. Reason: %s",
+                "Dropping death loot for player %s at %d %d %d. Reason: %s",
                 player.getName(), safePos.getBlockX(), safePos.getBlockY(), safePos.getBlockZ(), reason
         );
         return safePos;
     }
 
-    private void dropExperience(PlayerDeathEvent event, SDIConfig config, @Nullable Location safePos) {
+    private void dropExperience(PlayerDeathEvent event, SDIConfig config, @Nullable Location savePos) {
         int amount = event.getDroppedExp();
         if (!config.noXpSplatterOnDeath() || amount <= 0) return;
         Player player = event.getEntity();
         event.setDroppedExp(0);
-        Location pos = safePos != null ? safePos.add(0.5, 1, 0.5) : player.getLocation();
+        Location pos = savePos != null ? savePos.clone() : player.getLocation();
         player.getWorld().spawn(pos, ExperienceOrb.class, orb -> {
             orb.setExperience(amount);
             orb.setVelocity(new Vector());

@@ -8,7 +8,7 @@ no-xp-splatter-on-death: true
 no-death-item-despawn: true
 item-despawn-timer: 300
 
-# If a player dies in/above lava or in/above the Void, their items drop at the last safe spot they stood on.
+# If a player dies in/above lava or in/above the Void, their items and experience drop at the last safe spot they stood on.
 try-item-lava-save-on-death: true
 try-item-void-save-on-death: true
 
@@ -27,6 +27,12 @@ keep-hotbar-on-death: false
 hotbar-drop-list: []
 keep-offhand-on-death: false
 offhand-drop-list: []
+
+# Keep items with durability on death, minus kept-item-durability-loss-percent of their total durability (0-100).
+# Never breaks an item, it keeps at least 1 durability. Items kept by the options above don't lose durability.
+keep-damageable-items-on-death: false
+kept-item-durability-loss-percent: 20
+damageable-item-drop-list: []
 
 # Log what the plugin does on each death.
 debug: false
