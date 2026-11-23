@@ -1,6 +1,6 @@
 # Simple Death Improvements (Paper)
 
-The Paper plugin version of Simple Death Improvements. It is server-side only and runs on Paper 1.21.1 and newer (compiled against 1.21.1 and 26.3, bot-tested on 1.21.1 and 26.1.2).
+The Paper plugin version of Simple Death Improvements. It is server-side only and runs on Paper 1.21.1 and newer (compiled against 1.21.1 and 26.3, bot-tested on 1.21.1, 1.21.11 and 26.1.2).
 
 ## Building
 
