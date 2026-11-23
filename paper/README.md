@@ -1,6 +1,6 @@
-# Death Improvements Plus (Paper)
+# Simple Death Improvements (Paper)
 
-The Paper plugin version of Death Improvements Plus. It is server-side only and runs on Paper 1.21.1 and newer (compiled against 1.21.1 and 26.3, bot-tested on 1.21.1 and 26.1.2).
+The Paper plugin version of Simple Death Improvements. It is server-side only and runs on Paper 1.21.1 and newer (compiled against 1.21.1 and 26.3, bot-tested on 1.21.1 and 26.1.2).
 
 ## Building
 
@@ -18,7 +18,7 @@ The jar ends up in `paper/build/libs/`. Its version comes from `mod.version` in 
 
 ## Configuration
 
-`plugins/DeathImprovementsPlus/config.yml` holds the same options as the mod's config. Run `/dip reload` (permission `deathimprovementsplus.reload`, op by default) after editing it.
+`plugins/SimpleDeathImprovements/config.yml` holds the same options as the mod's config. Run `/sdi reload` (permission `simpledeathimprovements.reload`, op by default) after editing it.
 
 ## Differences from the Fabric/NeoForge mod
 

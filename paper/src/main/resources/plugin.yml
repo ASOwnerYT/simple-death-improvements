@@ -1,16 +1,16 @@
-name: DeathImprovementsPlus
+name: SimpleDeathImprovements
 version: '${version}'
-main: me.asowneryt.death_improvements_plus.paper.DIPPlugin
+main: me.pajic.simple_death_improvements.paper.SDIPlugin
 api-version: '1.21'
 description: '${description}'
-authors: [ASOwnerYT, pajic]
+authors: [pajic, ASOwnerYT]
 website: https://github.com/ASOwnerYT/simple-death-improvements
 commands:
-  dip:
-    description: Death Improvements Plus admin command
-    usage: /dip reload
-    permission: deathimprovementsplus.reload
+  sdi:
+    description: Simple Death Improvements admin command
+    usage: /sdi reload
+    permission: simpledeathimprovements.reload
 permissions:
-  deathimprovementsplus.reload:
+  simpledeathimprovements.reload:
     description: Allows reloading the config
     default: op
